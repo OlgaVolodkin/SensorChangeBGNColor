@@ -23,10 +23,6 @@ import static android.hardware.SensorManager.SENSOR_DELAY_FASTEST;
 
 public class SensorIntentService extends IntentService implements SensorEventListener {
 
-    Timer timer;
-    SensorManager sensorManager;
-    Sensor accelerometerSensor;
-    ScreenSensor sensor;
     float xValue, yValue, zValue;
     boolean accelerometerPresent;
     Integer lastSensorPosition = 0;
@@ -35,38 +31,33 @@ public class SensorIntentService extends IntentService implements SensorEventLis
 
 
     public SensorIntentService() {
-        super("SensorIntentService");
+        super(Consts.IntentService.INTENT_SERVICE_NAME);
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
         addServiceSensor();
         if (accelerometerPresent) {
-            timer = new Timer();
+            Timer timer = new Timer();
             if (intent != null) {
                 timer.schedule(new TimerTask() {
                     public void run() {
-                        try {
-                            saveDataToRealm();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        saveDataToRealm();
                     }
                 }, 0, 300);
             }
-        }
-        else {
-            sendSensorInfoToClient(999);
+        } else {
+            sendSensorInfoToClient(Consts.Sensor.ERR_MESSAGE);
         }
     }
 
     private void addServiceSensor() {
-        sensorManager =(SensorManager) getSystemService(SENSOR_SERVICE);
+        SensorManager sensorManager =(SensorManager) getSystemService(SENSOR_SERVICE);
         List<Sensor> sensorList = sensorManager.getSensorList(Sensor.TYPE_ACCELEROMETER);
         if(sensorList.size() > 0) {
             accelerometerPresent = true;
-            accelerometerSensor = sensorList.get(0);
-            sensorManager.registerListener(this, accelerometerSensor, SENSOR_DELAY_FASTEST); //SENSOR_DELAY_NORMAL
+            Sensor accelerometerSensor = sensorList.get(0);
+            sensorManager.registerListener(this, accelerometerSensor, SENSOR_DELAY_FASTEST);
         } else {
             accelerometerPresent = false;
             Log.i(TAG,"No accelerometer present!");
@@ -76,14 +67,11 @@ public class SensorIntentService extends IntentService implements SensorEventLis
     private Integer getScreenSensorData() {
         Integer sensorPosition;
         if (yValue >= 6) {
-            sensorPosition = 3;
-            Log.i(TAG, "USER");
+            sensorPosition = Consts.Sensor.USER;
         } else if (zValue >= 0) {
-            sensorPosition = 1;
-            Log.i(TAG, "UP");
+            sensorPosition = Consts.Sensor.UP;
         } else {
-            sensorPosition = 2;
-            Log.i(TAG, "DOWN");
+            sensorPosition = Consts.Sensor.DOWN;
         }
         return sensorPosition;
     }
@@ -103,7 +91,7 @@ public class SensorIntentService extends IntentService implements SensorEventLis
         Integer sensorPosition = getScreenSensorData();
         Realm realm = null;
         try {
-            realm = Realm.getDefaultInstance(); // opens "realm.realm"
+            realm = Realm.getDefaultInstance();
             if (realmIdCount < 0) {
                 RealmResults<ScreenSensor> realmList = realm.where(ScreenSensor.class).findAll();
                 realmIdCount = realmList.size() + 1;
@@ -115,17 +103,14 @@ public class SensorIntentService extends IntentService implements SensorEventLis
                 realm.deleteAll();
                 realmIdCount = 0;
             }
-            sensor = realm.createObject(ScreenSensor.class);
+            ScreenSensor sensor = realm.createObject(ScreenSensor.class);
             sensor.setScreenPosition(sensorPosition);
             realm.commitTransaction();
             realm.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            Log.i(TAG,e.getMessage());
-        }
-
-        finally {
+            Log.i(TAG, e.getMessage());
+        } finally {
             if(realm != null) {
                 realm.close();
             }

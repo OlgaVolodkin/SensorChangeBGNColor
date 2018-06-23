@@ -10,8 +10,8 @@ import com.moveo.olga.moveotask.services.SensorIntentService;
 
 public class MainPresenter implements MainInterface.Presenter {
 
-    MainInterface.View view;
-    MainModel model;
+    private MainInterface.View view;
+    private MainModel model;
 
     public MainPresenter(MainActivity view) {
         this.view = view;
@@ -33,12 +33,12 @@ public class MainPresenter implements MainInterface.Presenter {
     public void broadcastOnReceive(Intent intent, Context context) {
         int sensorInfo = intent.getIntExtra(Consts.Receiver.BROADCAST_INTENT_NAME, 0);
         int backColor;
-        if (sensorInfo == 1) {
+        if (sensorInfo == Consts.Sensor.UP) {
             backColor = context.getResources().getColor(android.R.color.holo_blue_dark);
-        } else if (sensorInfo == 2) {
+        } else if (sensorInfo == Consts.Sensor.DOWN) {
             backColor = context.getResources().getColor(android.R.color.holo_red_dark);
         }
-        else if (sensorInfo == 3) {
+        else if (sensorInfo == Consts.Sensor.USER) {
             backColor = context.getResources().getColor(android.R.color.holo_green_dark);
         } else {
             backColor = context.getResources().getColor(android.R.color.holo_orange_dark);
