@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MoveoTask</string>
+    <string name="err_message">No accelerometer present!</string>
+</resources>
